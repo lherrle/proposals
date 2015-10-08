@@ -1,0 +1,143 @@
+\documentclass[11pt]{article}
+\usepackage{geometry}
+\geometry{letterpaper}
+\geometry{margin=0.75in}
+
+
+\usepackage[utf8]{inputenc}
+\usepackage{listings}
+\usepackage{xcolor}
+% credit: http://tex.stackexchange.com/questions/68091/how-do-i-add-syntax-coloring-to-my-c-source-code-in-beamer
+% https://en.wikibooks.org/wiki/LaTeX/Source_Code_Listings
+\lstset{language=C,
+        basicstyle=\ttfamily,
+        keywordstyle=\color{blue}\ttfamily,
+        stringstyle=\color{red}\ttfamily,
+        commentstyle=\color{green}\ttfamily,
+        morecomment=[l][\color{magenta}]{\#}
+}
+
+
+
+\usepackage{natbib}
+\usepackage{graphicx}
+\usepackage{pdfpages}
+\usepackage{hyperref}
+\usepackage{enumerate}
+
+\newcommand{\tab}{\hspace*{2em}}
+\newcommand{\norm}[1]{\lVert#1\rVert}
+\newcommand{\sub}{\textsubscript}
+\newcommand{\Depth}{2}
+\newcommand{\Height}{2}
+\newcommand{\Width}{2}
+
+\usepackage{mathtools}
+\DeclarePairedDelimiter\ceil{\lceil}{\rceil}
+\DeclarePairedDelimiter\floor{\lfloor}{\rfloor}
+
+\usepackage{relsize}
+\usepackage{pdfpages}
+
+\def\wl{\par \vspace{\baselineskip}}
+
+\makeatletter
+\renewcommand{\maketitle}{\bgroup\setlength{\parindent}{0pt}
+\begin{flushleft}
+  {\Large \textsc{\@title}}\newline
+  \textsc{\@author}
+  \rule{\textwidth}{1pt}
+\end{flushleft}\egroup
+}
+\makeatother
+
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\rhead{\textsc{bae43, emg222, ehl59, sjm324} \thepage}
+\cfoot{}
+\renewcommand{\headrulewidth}{0pt}
+\setlength{\headheight}{0.5in}
+
+\title{\textbf{CS 5220/6630 Final Project Proposal}}
+\author{Bryce Evans, Eric Gao, Eric Lee, Stephen McDowell}
+\date{\textbf{October 2015}}
+
+\setlength\parindent{0pt}
+
+\begin{document}
+\thispagestyle{empty}
+\maketitle
+\section{Introduction}
+
+For our final project we propose to utilize our knowledge of parallel systems to drastically increase the rendering time of a somewhat simplistic ray tracer.  For CS 6630 we have been working with an educational ray tracer \emph{Nori} written in C++, which has recently been ported to Java (named \emph{Wakame}).  To better suit the tools we have learned in CS 5220, we will be using \emph{Nori} as the primary starting point for parallel improvement.\\
+
+The project can be split into two realms:
+
+\begin{enumerate}[1.]
+    \item Render something beautiful (CS 6630), and
+    \item Render something really fast (CS 5220).
+\end{enumerate}
+
+The access to the cluster and specifically the Xeon Phis is greatly exciting, and we intend to focus on using the cluster for these purposes.  See the \emph{Compilation and Execution} section for expected challenges and pitfalls, and our proposed course(s) of action.
+
+\section{Rendering Intentions}
+
+In CS 6630, we have been discussing the benefits and tradeoffs of various schemes for solving (or approximating) the rendering equation.  The more interesting of which fall under the broad category of \emph{Monte Carlo Path Tracing}.  The current assignment for CS 6630 focuses more on direct integration schemes (both light-biased and material-biased), with a finale of Multiple Importance Sampling that combines the two.  Later in the semester, we will also investigate volumetric methods that enable the rendering of things such as fog or clouds.\\
+
+For this project we have two primary objectives that we can focus on, and are currently investigating the level of difficulty and overall interest we as a group have in:
+
+\begin{enumerate}[1.]
+    \item Caustics
+
+    Caustics are attractive and important elements of any complex (as well as many simple) scenes that add substance and provide photo-realism.  Of particular interest here would be caustics as produced from fluids such as water.
+
+    \item Volume Rendering
+
+    Volume rendering is equally exciting in that it allows you to introduce things such as fog or clouds into the scene you are rendering, which provides interesting and immediate effects such as depth cues and/or a better feeling for the scale of the scene being rendered.
+\end{enumerate}
+
+Initial research seems to indicate that a viable path to potentially enabling both at reasonable convergence rates would be to implement \emph{Photon Mapping}.  There are a wide range of resources out there on the topic, and we are actively researching this.  Although alternatives such as \emph{Metropolis Light Transport} exist, we are generally intimidated by the nature of some of these alternatives (and the mathematical complexity therein).\\
+
+Another interesting area we are considering would be to focus on rendering volumetric caustics (e.g. for underwater \href{http://media.theiapolis.com/d4/hU0/i1M8K/k2/l192/w1HC/finding-nemo.jpg}{\textcolor{blue}{finding nemo}} style scenarios).\\
+
+In its current form, we need to do a little more research, come to a consensus as a group, and speak again with Professor Marschner to come to an conclusion on what the actual form of rendering we should pursue is.
+
+\section{Parallel Intentions}
+
+As discussed in lecture, Monte Carlo techniques fall under the category of embarassingly parallel.  That said, we do believe that this is an excellent place to start in terms of layered parallelism.  Meaning that having an embarassingly parallel algorithm is not a bad thing to want to offload to the Phi boards.\\
+
+The greater concern of parallelizing something like a path tracer is thread divergence.  Unfortunately, solving this is dependent upon the type of rendering algorithm we intend to implement.  There are many interesting areas with plenty of publications, though, from GPU Path Tracing (for which the concepts at the very least will be translatable to the Phis), to Ray Bundling, and more.\\
+
+A rather interesting graph based method described in \emph{GPU-based Out-of-Core Many-Lights Rendering} (http://dl.acm.org/citation.cfm?id=2508413) is of great interest, as its methodology is quite amenable to porting to the Phis.\\
+
+At a higher level, when considering rendering an image that is $N \times M$ pixels, blocking strategies similar to that employed by the \texttt{matmul-} exercise can be be explored to dispatch different sections of the image to be rendered in parallel or in stages (depending on where we seek to run this code -- Node or Phi).  We intend to employ careful diagnostics of this in conjunction with the parallelization of the solver to find the right balance.\\
+
+\section{Parallelization Stages}
+
+It is worth noting at this point that half of our group is currently using the Java version of the framework, and half of our group is using the C++ version.  The first and most important stage is to create a unified C++ framework.  Pending approval from Professor Marschner, we intend to merge the two immediately after Fall Break, since we will have submitted the current project for CS 6630 by then.  Furthermore, we will need to tweak the framework a little to enable rendering without a display so that we can run it on the class cluster (this should not be extraordinarily difficult, but necessary nonetheless).  We fully intend, though, to render test scenes with small numbers of samples to debug locally.  Being able to see the results (dynamically) is extremely valuable, and we do not want to tie up the cluster resources until we believe that we are producing valid results locally.\\
+
+After formulating a unified framework, we will begin doing analyses both on and off the cluster to examine the overall behavior of the ray tracer.  Though we intend to focus on using the class cluster, we want to remain receptive to alternatives such as \textsc{Cuda} (since at least one of our group members is familiar with this form of parallelization).  Analysis of local runs and keeping the original framework in tact will enable us to make a switch if things do not go well with the cluster.\\
+
+HOWEVER, our primary target is the class cluster.  In particular, with the current assignment for CS 5220, we are confident that we will have gained the necessary knowledge / skill set to effectively offload our integrator to the Phis.
+
+\section{Compilation and Execution}
+
+As we intend to target the Phis, we are generally not concerned with portability.  That is, we intend to take full advantage of the sheer power of \texttt{icc}.  On the other hand, the current build system of \emph{Nori} has support for Microsoft Visual Studio (and its compiler...), Linux, and OSX alike.  So our final submission will likely be in the form of
+
+\begin{enumerate}[1.]
+    \item An optimized Makefile for \texttt{icc} for use on the cluster, and
+    \item A generic program that runs for any platform*
+\end{enumerate}
+
+*depending on how things go, this may or may not be dependent upon said generic system having a \textsc{Cuda} capable device attached.  Though this will take a little effort in manipulating the current \texttt{CMake} build system, in theory it should not be entirely difficult.  The hotfix being use \texttt{CMake} and then modify the resultant Makefile to use \texttt{icc} and our favorite flags.  It is quite reasonable to also produce two makefiles (somewhat similar to \texttt{matmul-}) in the case where \texttt{CMake} is run on a system that has \texttt{icc}.\\
+
+This is all a long way of saying that, from a software engineering standpoint, we are grateful that Wenzel Jakob (the creator of \emph{Nori}) has gone through such lengths to enable multi-platform support and fully intend to follow his good example by making our final submission as portable as reasonably possible.  For example, we can easily surround items such as hand-vectorized intel code or \texttt{\#pragma offload target(mic)} with conditional \texttt{\#ifdef} statements :)
+
+\section{Summary}
+
+At a high level, we are all very excited to produce a sophisticated approximation to the rendering equation on the class cluster.  We need to confer with Professor Marschner (before Fall Break) to help us come to a conclusion about what we should attempt to implement for the rendering side.\\
+
+While in some senses the rendering and the parallelization thereof are quite separable, there are algorithmic nuances that must be considered before non-embarassingly-parallel techniques can be employed.
+
+
+\end{document}

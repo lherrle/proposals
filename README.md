@@ -1,4 +1,10 @@
 # Final project proposals
+
+## Proposed groups due Nov 3
+
+By the end of day on Tues, Nov 3, please let us know your group and
+the proposed work (email Colin Ponce and David Bindel).
+
 ## Initial proposals due Oct 7
 
 Your final project should involve understanding performance, either through

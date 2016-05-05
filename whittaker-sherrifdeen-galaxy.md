@@ -1,0 +1,24 @@
+## Galaxy Collision Simulation
+#### Michael Whittaker (mjw297) and Sheroze Sheriffdeen (mss385)
+
+### Introduction 
+
+Galaxy simulations fall under the category of simulating physical systems represented by particle models. Specifically, this is a correlated system where each element can have a mass, radius, velocity, position and acceleration. 
+
+At each time step of the system, the velocity, position and acceleration attributes of an element need to be updated. These attributes for a single element depend on every other elements in the system. 
+
+
+### Project Goal
+
+For large number of elements, the computational cost of advancing the system over a large time period can be significant if the simulation is limited to the serial computing domain. 
+
+This project aims to use the techniques of shared memory programming, message passing, vectorization to leverage the computational capability of the Totient cluster to improve the performance of the simulation. 
+
+The simulation will employ a time integration scheme that would be optimized to fit the parallel programming model on the cluster. Specifically, we aim to explore a parallel particle-particle particle-mesh (P3M) method to rapidly calculate the gravitational potential on a mesh using an FFT to solve Poisson’s equation from the mass distribution.
+
+Furthermore, if time permits, this project aims to explore various visualization approaches including interactive 
+initial conditions.
+
+### References
+ - Hockney, R., & Eastwood, J. (1988). _Computer simulation using particles_ (Special student ed.). Bristol [England: A. Hilger.
+ - Dawson, J. (1983) _Reviews of Modern Physics_ 55, p.403
